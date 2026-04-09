@@ -64,12 +64,6 @@ Non-negative Matrix Factorization (NMF) decomposes the harmonic spectrum to attr
 
 ---
 
-## Security
-
-- **API keys** are stored in `.env` and never committed to version control (enforced via `.gitignore`)
-- **Pydantic models** validate and sanitize all API request bodies, preventing malformed data injection
-- **Structured error handling** across all external service calls with categorized exception types
-- **Rate-limiting** on AI endpoints prevents accidental API credit exhaustion
 
 ---
 
