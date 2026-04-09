@@ -1,0 +1,11 @@
+fastapi==0.135.1
+uvicorn==0.42.0
+numpy==2.4.4
+scipy==1.17.1
+pydantic==2.12.5
+python-dotenv==1.2.2
+requests==2.33.1
+psutil
+matplotlib
+chart-studio
+pypdf

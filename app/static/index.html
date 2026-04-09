@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GridSense AI — Industrial Intelligence Console</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<div class="scene-bg">
+  <div class="orb a"></div>
+  <div class="orb b"></div>
+  <div class="orb c"></div>
+</div>
+<div class="hdr">
+  <div class="brand">
+    <span class="eyebrow">Industrial Intelligence Console</span>
+    <h1>GridSense AI</h1>
+  </div>
+  <div class="st">
+    <span class="status-pill"><span class="dot"></span><span>Live — Trained on Hitachi XPQRS Dataset (17 classes)</span></span>
+    <button class="bt" id="aud" onclick="togAud()">🔊 Audio: OFF</button>
+    <span id="fps" style="font-family:'IBM Plex Mono';font-size:10px">0fps</span>
+  </div>
+</div>
+<div class="exec-strip">
+  <div class="exec-card"><div class="k">Fault</div><div class="v" id="exFault">Normal</div><div class="s" id="exConf">0% confidence</div></div>
+  <div class="exec-card"><div class="k">Zone</div><div class="v" id="exZone">Motor Room</div><div class="s">Live operating area</div></div>
+  <div class="exec-card"><div class="k">Likely Source</div><div class="v" id="exSource">Awaiting attribution</div><div class="s" id="exSourceLbl">Likely contributor: Unknown</div></div>
+  <div class="exec-card"><div class="k">Severity</div><div class="v" id="exSeverity">Nominal</div><div class="s" id="exSeverityScore">Score 0</div></div>
+  <div class="exec-card"><div class="k">Cost Impact</div><div class="v" id="exCost">₹0</div><div class="s">Estimated business exposure</div></div>
+  <div class="exec-card"><div class="k">Recommended Action</div><div class="v" id="exAction">Continue monitoring</div><div class="s">Operator next step</div></div>
+</div>
+<div class="g">
+  <!-- R1: Waveform + Metrics + Severity -->
+  <div class="p s2">
+    <h3>Live Waveform <span class="tag">REAL DATA</span></h3>
+    <div class="ctrls">
+      <button class="bt dn" onclick="inj('sag','motor_room')">Sag</button>
+      <button class="bt dn" onclick="inj('harmonic','feeder_a')">Harmonics</button>
+      <button class="bt dn" onclick="inj('transient','panel_b')">Transient</button>
+      <button class="bt dn" onclick="inj('compound','production_floor')">Compound</button>
+      <button class="bt dn" onclick="inj('flicker','motor_room')">Flicker</button>
+      <button class="bt dn" onclick="inj('interruption','feeder_a')">Interruption</button>
+      <button class="bt dn" onclick="inj('notch','panel_b')">Notch</button>
+      <button class="bt" id="nbtn" onclick="togNoise()">Noise: OFF</button>
+      <button class="bt" id="demoBtn" style="border-color:#00e68a;color:#00e68a" onclick="startJudgeDemo()">▶ Demo Mode</button>
+      <button class="bt" id="demoResetBtn" style="border-color:#9d9d9d;color:#d0d0d0" onclick="resetJudgeDemo()">↺ Reset Demo</button>
+      <button class="bt" style="border-color:#a78bfa;color:#a78bfa" onclick="trigHack()">☠️ CYBER-ATTACK</button>
+      <button class="bt" id="wcamBtn" onclick="togWebcam()">Webcam: OFF</button>
+      <select id="camzone" style="background:var(--s2);border:1px solid var(--brd);color:var(--tx);padding:5px 8px;border-radius:5px;font-family:'Outfit';font-size:11px">
+        <option value="panel_b">Cam Zone: Panel B</option>
+        <option value="motor_room">Cam Zone: Motor Room</option>
+        <option value="feeder_a">Cam Zone: Feeder A</option>
+        <option value="production_floor">Cam Zone: Production Floor</option>
+      </select>
+      <div style="display:flex;align-items:center;gap:4px;color:var(--tx2);font-size:11px">Intensity: <input type="range" id="ns" min="1" max="50" value="20" oninput="document.getElementById('nsv').innerText=Math.round((this.value/50)*100)+'%'" onchange="chgN(this.value)"><span id="nsv" style="width:25px">40%</span></div>
+      <button class="bt" onclick="trigVision()">🔍 Vision AI</button>
+    </div>
+    <div id="demoStatus" class="demo-status"><b>Demo Mode:</b> Ready. Launch a guided Feeder A harmonic incident storyline for judges, then use Reset Demo to replay it cleanly.</div>
+    <div class="cw"><canvas id="wfc"></canvas></div>
+  </div>
+  <div class="p">
+    <h3>Severity</h3>
+    <div class="sev"><div class="n" id="sv" style="color:var(--ac)">0</div><div class="l">System Score</div></div>
+    <div class="mg" style="grid-template-columns:1fr 1fr">
+      <div class="m ok" id="mt"><div class="v">0%</div><div class="l">THD</div><div class="p-br"><div class="p-f" id="mt-f" style="width:0%;background:var(--ac)"></div></div></div>
+      <div class="m ok" id="mr"><div class="v">230V</div><div class="l">RMS</div><div class="p-br"><div class="p-f" id="mr-f" style="width:50%;background:var(--ac)"></div></div></div>
+      <div class="m ok" id="mp"><div class="v">0.95</div><div class="l">PF</div><div class="p-br"><div class="p-f" id="mp-f" style="width:95%;background:var(--ac)"></div></div></div>
+      <div class="m ok" id="mf"><div class="v">50.0</div><div class="l">Hz</div><div class="p-br"><div class="p-f" id="mf-f" style="width:50%;background:var(--ac)"></div></div></div>
+    </div>
+    <div id="ieee" style="font-size:10px;color:var(--tx2);margin-top:8px">IEEE 1159: Normal</div>
+    <div id="itic" style="font-size:10px;color:var(--tx2)">ITIC: —</div>
+    <div id="sensor" style="font-size:10px;color:var(--ac);margin-top:4px">Sensor: ✓ Valid</div>
+  </div>
+
+  <!-- R2: Narration + Plant Map + Equipment -->
+  <div class="p s2">
+    <h3>AI Narration <span class="tag">STRUCTURED</span></h3>
+    <div class="ptr" id="trend"></div>
+    <div class="ptr" id="ipat" style="border-left-color:var(--red);background:rgba(255,77,106,.06)"></div>
+    <div id="narr">Monitoring power quality on Hitachi-provided dataset... System nominal.<span class="cur"></span></div>
+    <div class="cb">
+      <input type="text" id="qi" placeholder="Ask: 'What's causing damage?' / 'Equipment health?' / 'How many incidents?'" onkeydown="if(event.key==='Enter')askQ()">
+      <button class="bt" onclick="askQ()">Ask</button>
+    </div>
+    <div id="vres" style="font-size:11px;color:var(--ac2);margin-top:6px;line-height:1.5;display:none"></div>
+  </div>
+  <div class="p">
+    <h3>Plant Floor Map</h3>
+    <div class="pm">
+      <div class="zn" id="z-feeder_a" onclick="brk('feeder_a')" style="left:5%;top:5%;width:42%;height:42%">Feeder A</div>
+      <div class="zn" id="z-motor_room" onclick="brk('motor_room')" style="left:53%;top:5%;width:42%;height:42%">Motor Room</div>
+      <div class="zn" id="z-panel_b" onclick="brk('panel_b')" style="left:5%;top:53%;width:42%;height:42%">Panel B</div>
+      <div class="zn" id="z-production_floor" onclick="brk('production_floor')" style="left:53%;top:53%;width:42%;height:42%">Production Floor</div>
+    </div>
+  </div>
+
+  <!-- R3: Incidents + Scalogram + Health -->
+  <div class="p">
+    <h3>Incident Log <span class="tag">MEMORY</span></h3>
+    <div id="ilog"></div>
+  </div>
+  <div class="p">
+    <h3>CWT Scalogram + SHAP</h3>
+    <img id="scimg" class="si" src="">
+    <div id="shap" style="margin-top:6px"></div>
+    <div style="margin-top:8px">
+      <h3>Causal Analysis</h3>
+      <div id="causal" style="font-size:11px;color:var(--tx2);line-height:1.5">No active causal pattern.</div>
+    </div>
+    <div style="margin-top:8px">
+      <h3>Waveform Image CV</h3>
+      <div id="wcv" class="cvp">Scalogram vision output will appear here.</div>
+    </div>
+  </div>
+  <div class="p">
+    <h3>Equipment Health <span class="tag">IEEE C57.91</span></h3>
+    <div id="eqlist"></div>
+    <h3 style="margin-top:12px">Asset Digital Twin</h3>
+    <div id="dtwin"></div>
+    <h3 style="margin-top:12px">Sustainability</h3>
+    <div class="sus">
+      <div class="sc"><div class="v" id="sa">0</div><div class="l">Aging Hrs</div></div>
+      <div class="sc"><div class="v" id="sco">0</div><div class="l">CO₂ (kg)</div></div>
+      <div class="sc"><div class="v" id="scs">₹0</div><div class="l">Cost Saved</div></div>
+    </div>
+  </div>
+
+  <!-- R4: Propagation + ITIC -->
+  <div class="p s2">
+    <h3>Fault Propagation <span class="tag">CASCADE</span></h3>
+    <svg id="pg" width="100%" height="250"></svg>
+    <div id="pn" style="font-size:11px;color:var(--tx2);margin-top:6px;line-height:1.4"></div>
+  </div>
+  <div class="p">
+    <h3>ITIC Tolerance Curve</h3>
+    <div style="height:200px"><canvas id="ic"></canvas></div>
+  </div>
+  <div class="p">
+    <h3>Devices <span class="tag">LIVE TELEMETRY</span></h3>
+    <div id="devs"></div>
+  </div>
+  <div class="p">
+    <h3>CCTV Vision <span class="tag">PHYSICAL AI</span></h3>
+    <img id="camimg" class="camframe" alt="CCTV frame">
+    <div id="camdesc" class="cvp">Zone camera analysis will appear here.</div>
+  </div>
+  <div class="p s2">
+    <h3>What-If Simulation <span class="tag">DECISION SUPPORT</span></h3>
+    <div class="whatif">
+      <select id="waction">
+        <option value="isolate">Isolate feeder</option>
+        <option value="thd_up">Raise THD</option>
+        <option value="reduce_load">Reduce load</option>
+      </select>
+      <select id="wzone">
+        <option value="feeder_a">Feeder A</option>
+        <option value="motor_room">Motor Room</option>
+        <option value="panel_b">Panel B</option>
+        <option value="production_floor">Production Floor</option>
+      </select>
+      <input id="wamt" type="number" value="20" min="0" max="100">
+      <button class="bt" onclick="runWhatIf()">Run</button>
+    </div>
+    <div id="wires">Run a scenario to preview severity, propagation, and asset impact.</div>
+  </div>
+  <div class="p">
+    <h3>Maintenance Report <span class="tag">EXPORT</span></h3>
+    <div class="cb" style="margin-top:0">
+      <button class="bt" onclick="exportReport()">Generate Report</button>
+    </div>
+    <div id="rpt">Latest maintenance summary will appear here.</div>
+  </div>
+  <div class="p s3">
+    <h3>Fleet View <span class="tag">MULTI-SITE</span></h3>
+    <div class="flt" id="fleet"></div>
+  </div>
+
+  <!-- ── Harmonic Forensics Panels ── -->
+  <div class="p s2" id="hf-attribution-panel">
+    <h3>Harmonic Source Attribution <span class="tag">NMF FORENSICS</span></h3>
+    <div id="hf-sources"><div style="font-size:11px;color:var(--tx2)">Accumulating spectral history — attribution available in ~5s...</div></div>
+    <div class="hf-budget">
+      <span>IEEE 519 Budget</span>
+      <div class="hf-budget-bar"><div class="hf-budget-fill" id="hf-budget-fill" style="width:0%;background:var(--ac)"></div></div>
+      <span id="hf-budget-pct" style="font-family:'IBM Plex Mono';font-size:10px">0%</span>
+      <span style="color:var(--tx2);margin-left:2px">/&nbsp;100%</span>
+    </div>
+  </div>
+
+  <div class="p" id="hf-ledger-panel">
+    <h3>Harmonic Liability Ledger <span class="tag">LIVE</span></h3>
+    <div id="hf-ledger"><div style="font-size:11px;color:var(--tx2)">No violations recorded yet.</div></div>
+  </div>
+
+  <div class="p s3" id="hf-sim-panel">
+    <h3>Renewable Connection Impact Simulator <span class="tag">IEEE 519 PRE-CHECK</span></h3>
+    <div class="hf-sim-grid">
+      <select id="hf-src-type">
+        <option value="Solar PV Inverter">Solar PV Inverter</option>
+        <option value="Wind DFIG">Wind DFIG</option>
+        <option value="Variable Frequency Drive">Variable Frequency Drive</option>
+        <option value="Arc Furnace">Arc Furnace</option>
+        <option value="Switched-Mode PSU">Switched-Mode PSU</option>
+        <option value="EV Charger">EV Charger</option>
+        <option value="LED Lighting Array">LED Lighting Array</option>
+      </select>
+      <input id="hf-cap-mw" type="number" value="10" min="0.1" max="500" step="0.5" placeholder="Capacity (MW)">
+      <select id="hf-feeder">
+        <option value="feeder_a">Feeder A</option>
+        <option value="motor_room">Motor Room</option>
+        <option value="panel_b">Panel B</option>
+        <option value="production_floor">Production Floor</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button class="bt" id="hf-sim-btn" onclick="runHfSim()">⚡ Run Impact Assessment</button>
+      <div class="hf-pdf-row">
+        <button class="bt" id="hf-pdf-btn" onclick="downloadHfPdf()">📄 Export Compliance Report</button>
+        <span class="hf-pdf-status" id="hf-pdf-status"></span>
+      </div>
+    </div>
+    <div class="hf-result" id="hf-sim-result">Select a source type and capacity, then click Run Impact Assessment.</div>
+  </div>
+</div>
+<div id="tkr"><span id="tkrt">>>> GRID NOMINAL | NO EVENTS</span></div>
+<div id="cctv">
+  <div class="cc-t"><span>CAM 04</span><span id="cc-rec">🔴 REC</span></div>
+  <div class="cc-b">
+    <div class="cc-rotor" id="cc-rot"></div>
+    <div class="cc-stat" id="cc-stat"></div>
+    <div class="cc-hack" id="cc-hack"></div>
+  </div>
+</div>
+<div id="aov">
+  <div id="aov-in">
+    <div id="a-hdr">⚠️ AI AGENT OVERRIDE</div>
+    <div id="a-txt">CASCADING FAILURE IMMINENT.<br>Autonomous isolation sequence initiated.</div>
+    <div id="a-num">5</div>
+    <div>
+      <button class="a-bt" onclick="abtAov()">ABORT OVERRIDE</button>
+      <button class="a-bt" style="border-color:#ff4d4d;color:#ff4d4d" onclick="exeAov()">EXECUTE IMMEDIATELY</button>
+    </div>
+  </div>
+</div>
+<script src="/static/dashboard_logic.js"></script>
+</body>
+</html>
