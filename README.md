@@ -1,4 +1,4 @@
-# GridSense AI — Real-Time Power Quality Intelligence Platform
+# GridWay — Real-Time Power Quality Intelligence Platform
 
 > An Industry 5.0 power grid monitoring system that fuses signal processing, machine learning, and generative AI to detect, classify, and narrate electrical faults in real time.
 
