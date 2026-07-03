@@ -6,7 +6,7 @@
 
 ## Overview
 
-GridSense AI is a full-stack edge-intelligence application designed for industrial power grids. It continuously monitors power quality across multiple zones, classifies electrical anomalies using a trained CNN-LSTM classifier, and provides natural-language incident narration via a Groq-powered LLM engine (with a local expert-logic fallback for offline reliability).
+GridWay AI is a full-stack edge-intelligence application designed for industrial power grids. It continuously monitors power quality across multiple zones, classifies electrical anomalies using a trained CNN-LSTM classifier, and provides natural-language incident narration via a Groq-powered LLM engine (with a local expert-logic fallback for offline reliability).
 
 This system is designed for operational reliability in environments where power quality directly impacts industrial output — aligning with the **Industry 5.0** vision of human-machine collaborative intelligence.
 
